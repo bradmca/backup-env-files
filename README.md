@@ -6,14 +6,16 @@ Whether you're juggling fifty side projects, surviving daily system reboots, or 
 
 ## ✨ What does it do?
 
-EnvGuard doesn't just copy files—it embarks on a heroic, recursive journey traversing your directories, locating **ANY** file starting with `.env` (we're talking `.env`, `.env.local`, `.env.production`, you name it!), and securely backing them up to a unified destination. 
+EnvGuard doesn't just copy files—it embarks on a heroic, recursive journey traversing **every local drive on your machine concurrently** via multithreading, locating **ANY** file starting with `.env` (we're talking `.env`, `.env.local`, `.env.production`, you name it!), and securely backing them up to a unified destination. 
 
-But wait, there's more! 🎩✨ It recreates the **exact folder tree structure** in the backup directory, so you'll always know exactly where those secrets originally came from.
+But wait, there's more! 🎩✨ The target directory is intelligently organized by your **machine's hostname**, followed by the **drive letter**, and recreates the **exact folder tree structure** inside, so you'll always know precisely where those secrets originally came from.
 
 ## 🌟 Key Features
 
-- **🌳 Perfect Tree Preservation**: Mirrors your source directory's structure perfectly inside the backup folder.
-- **🛡️ Bulletproof Scanning**: Laughs in the face of permission errors and carries on scanning without crashing.
+- **🚀 Multithreaded Scanning**: Dispatches an independent thread for every local drive (C:\, D:\, etc.) to scan your system at lightning speed.
+- **💻 Hostname-Aware Separation**: Backups are automatically sorted into folders matching your machine's unique hostname. 
+- **🌳 Perfect Tree Preservation**: Mirrors your source directory's structure perfectly inside the backup folder (e.g., `backup/MachineName/C/Users/Brad/...`).
+- **🛡️ Bulletproof Execution**: Laughs in the face of permission errors and carries on scanning without crashing.
 - **🤖 Smart & Safe**: Refuses to trigger infinite loops (automatically detects and skips its own backup destination).
 - **⚡ Lightweight**: Written in pure, dependency-free Python. 🐍 Just script and go!
 
@@ -31,25 +33,25 @@ python backup_env_files.py
 ```
 
 By default, it will:
-1. Scan your sweeping **`C:\`** drive. (Hold onto your hats! 🎩💨)
-2. Carefully place all salvaged `.env` files into a neatly organized **`C:\env_backup`** folder.
+1. Identify all accessible local drives (e.g., `C:\`, `D:\`).
+2. Spawn a thread for each drive. (Hold onto your hats! 🎩💨)
+3. Organize all salvaged `.env` files dynamically under **`C:\env_backup\<Your-Machine-Hostname>\<Drive-Letter>`**.
 
 ### 🎛️ Taking Control (Custom Flags)
 
-Want to target specific project folders instead of the whole drive? Use the parameters!
+Want to target a specific backup folder somewhere else? Use the `--backup` parameter!
 
 ```powershell
-python backup_env_files.py --source "C:\Users\Brad\CascadeProjects" --backup "D:\MySecureBackups\EnvVault"
+python backup_env_files.py --backup "D:\MySecureBackups\EnvVault"
 ```
 
 #### The Arguments:
-- `--source`: Where should the search begin? (Default: `C:\`)
-- `--backup`: Where should the rescued files be stored? (Default: `C:\env_backup`)
+- `--backup`: Where should the rescued files be stored globally? (Default: `C:\env_backup`)
 
 ## 💡 Pro Tips
 
-- **Patience is a Virtue**: If you're scanning your entire `C:\` drive top-to-bottom, grab a coffee ☕. It might take a few minutes to weave through the Windows OS labyrinth.
-- **Permission Errors Are Normal**: When scanning root drives, Windows will deny access to restricted system folders. EnvGuard handles these silently and gracefully, logging them in the final error count, but it won't stop the backup.
+- **Patience is a Virtue**: Even with multithreading, if you have massively packed drives, grab a coffee ☕. It might take a few minutes for the threads to weave through the Windows OS labyrinths.
+- **Permission Errors Are Normal**: When scanning root drives, Windows will naturally deny access to restricted system folders. EnvGuard handles these silently and gracefully, logging them in the final error count, but it won't stop the backup.
 
 ---
 *Built to keep your developer secrets safe, sound, and fully backed up! 🎉*
