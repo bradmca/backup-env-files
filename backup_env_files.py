@@ -5,6 +5,8 @@ import string
 import time
 import argparse
 import threading
+import tempfile
+from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -83,7 +85,7 @@ def start_multi_drive_backup(backup_dir: str):
     print("Starting Multi-threaded EnvGuard Backup...")
     print(f"Machine Name: {machine_name}")
     print(f"Local Drives found: {drives}")
-    print(f"Global Backup Destination: {Path(backup_dir).resolve()}")
+    print(f"Temporary Staging Directory: {Path(backup_dir).resolve()}")
     print("-" * 50)
     
     counters = {'copied': 0, 'errors': 0}
@@ -115,14 +117,14 @@ def start_multi_drive_backup(backup_dir: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Backup all .env files from ALL local drives to a backup directory, preserving the folder structure under the machine's hostname.",
+        description="Backup all .env files from ALL local drives to a zip file named by run date, preserving the folder structure under the machine's hostname.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     # The source parameter is removed because it now implicitly scans all local drives
     parser.add_argument(
         "--backup", 
         default="C:\\env_backup", 
-        help="The destination directory where the backup tree will be created"
+        help="The destination directory where the backup zip will be saved"
     )
     
     args = parser.parse_args()
@@ -134,4 +136,13 @@ if __name__ == "__main__":
         print(f"Failed to create backup directory {args.backup}: {e}")
         exit(1)
         
-    start_multi_drive_backup(args.backup)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    zip_filename = f"env-backup-{date_str}"
+    zip_filepath = os.path.join(args.backup, zip_filename)
+        
+    with tempfile.TemporaryDirectory() as temp_dir:
+        start_multi_drive_backup(temp_dir)
+        print("-" * 50)
+        print(f"Compressing backup to {zip_filepath}.zip...")
+        shutil.make_archive(zip_filepath, 'zip', temp_dir)
+        print(f"Compression complete! Zip archive located at {zip_filepath}.zip")
