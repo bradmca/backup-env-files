@@ -8,14 +8,20 @@ Whether you're juggling fifty side projects, surviving daily system reboots, or 
 
 EnvGuard doesn't just copy files—it embarks on a heroic, recursive journey traversing **every local drive on your machine concurrently** via multithreading, locating **ANY** file starting with `.env` (we're talking `.env`, `.env.local`, `.env.production`, you name it!), and securely backing them up into a single, dated **zip archive**. 
 
-But wait, there's more! 🎩✨ Inside the zip archive, the files are intelligently organized by your **machine's hostname**, followed by the **drive letter**, and recreates the **exact folder tree structure**, so you'll always know precisely where those secrets originally came from.
+Inside the zip archive, the files are intelligently organized by your **machine's hostname**, followed by the **drive letter**, and recreates the **exact folder tree structure**, so you'll always know precisely where those secrets originally came from.
+
+### ⚙️ How It Works Under the Hood (Two-Stage Execution)
+
+1. **Real-Time Staging (As It Goes):** As worker threads scan your drives, any `.env` file found is **copied immediately** into a temporary staging folder on disk (`tempfile.TemporaryDirectory`), recreating the folder hierarchy in real-time.
+2. **Final Compression & Cleanup (At the End):** Once all scanning threads finish, the script packages the staged directory into a dated `.zip` archive (e.g. `C:\env_backup\env-backup-YYYY-MM-DD.zip`) and automatically cleans up the temporary files.
 
 ## 🌟 Key Features
 
-- **🚀 Multithreaded Scanning**: Dispatches an independent thread for every local drive (C:\, D:\, etc.) to scan your system at lightning speed.
+- **🚀 Multithreaded Scanning**: Dispatches independent worker threads across all local drives (C:\, D:\, etc.) to scan your system at lightning speed.
+- **⚡ Real-Time Staging**: Copies files to a temporary staging area immediately as they are discovered during the scan.
 - **💻 Hostname-Aware Separation**: Backups are automatically sorted into folders matching your machine's unique hostname. 
 - **🌳 Perfect Tree Preservation**: Mirrors your source directory's structure perfectly inside the backup archive (e.g., `MachineName/C/Users/Brad/...`).
-- **📦 Auto-Archiving**: Automatically packages the organized backup into a dated zip archive (`env-backup-YYYY-MM-DD.zip`) for easy storage and sharing.
+- **📦 Auto-Archiving**: Automatically packages the organized backup into a dated zip archive (`env-backup-YYYY-MM-DD.zip`) for easy storage and sharing, cleaning up temporary files after.
 - **🛡️ Bulletproof Execution**: Laughs in the face of permission errors and carries on scanning without crashing.
 - **🤖 Smart & Safe**: Refuses to trigger infinite loops (automatically detects and skips its own backup destination).
 - **⚡ Lightweight**: Written in pure, dependency-free Python. 🐍 Just script and go!
@@ -35,8 +41,9 @@ python backup_env_files.py
 
 By default, it will:
 1. Identify all accessible local drives (e.g., `C:\`, `D:\`).
-2. Spawn a thread for each drive. (Hold onto your hats! 🎩💨)
-3. Compress all salvaged `.env` files into a single zip archive named **`C:\env_backup\env-backup-YYYY-MM-DD.zip`**.
+2. Spawn worker threads across top-level locations.
+3. Copy `.env` files into a temporary staging folder in real-time as they are found.
+4. Compress all salvaged files into a single zip archive named **`C:\env_backup\env-backup-YYYY-MM-DD.zip`** and clean up temporary files.
 
 ### 🎛️ Taking Control (Custom Flags)
 
