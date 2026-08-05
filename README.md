@@ -23,6 +23,7 @@ Inside the zip archive, the files are intelligently organized by your **machine'
 - **🌳 Perfect Tree Preservation**: Mirrors your source directory's structure perfectly inside the backup archive (e.g., `MachineName/C/Users/Brad/...`).
 - **📦 Auto-Archiving**: Automatically packages the organized backup into a dated zip archive (`env-backup-YYYY-MM-DD.zip`) for easy storage and sharing, cleaning up temporary files after.
 - **🛡️ Bulletproof Execution**: Laughs in the face of permission errors and carries on scanning without crashing.
+- **🚫 Smart Directory Exclusions**: Automatically skips OS system folders (`C:\Windows`, `ProgramData`), user system caches (`AppData`, `Temp`, `tmp`), recycle bins (`$Recycle.Bin`), and heavy dependency trees (`node_modules`) to dramatically speed up scanning.
 - **🤖 Smart & Safe**: Refuses to trigger infinite loops (automatically detects and skips its own backup destination).
 - **⚡ Lightweight**: Written in pure, dependency-free Python. 🐍 Just script and go!
 

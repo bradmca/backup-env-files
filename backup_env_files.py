@@ -10,6 +10,19 @@ from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+EXCLUDED_DIR_NAMES = {
+    'node_modules',
+    'appdata',
+    'windows',
+    '$recycle.bin',
+    '$recycler',
+    'recycler',
+    'temp',
+    'tmp',
+    'programdata',
+    'system volume information',
+}
+
 def status_indicator(stop_event: threading.Event, counters: dict, lock: threading.Lock):
     """Background thread that prints a status indicator."""
     spinner = ['-', '\\', '|', '/']
@@ -72,6 +85,10 @@ def backup_path_task(target_path_str: str, drive_path_str: str, base_backup_dir:
     except Exception:
         return # Skip if we can't resolve the path
     
+    # Skip if the target directory itself or any parent is in the excluded list
+    if any(p.lower() in EXCLUDED_DIR_NAMES for p in target_path.parts):
+        return
+
     drive_folder_name = drive_root_path.drive.replace(":", "") 
     if not drive_folder_name:
         # Fallback if no drive letter is found (rare on Windows)
@@ -96,6 +113,9 @@ def backup_path_task(target_path_str: str, drive_path_str: str, base_backup_dir:
         pass # Ignore permission or resolution errors on is_file
 
     for root, dirs, files in os.walk(target_path):
+        # Prune excluded directories from being traversed by os.walk
+        dirs[:] = [d for d in dirs if d.lower() not in EXCLUDED_DIR_NAMES]
+
         local_dirs_scanned += 1
         local_files_scanned += len(files)
         
@@ -109,10 +129,12 @@ def backup_path_task(target_path_str: str, drive_path_str: str, base_backup_dir:
 
         try:
             current_root = Path(root).resolve()
-            # If the current subfolder is the backup directory or inside it, skip it
-            if global_backup_path == current_root or global_backup_path in current_root.parents:
+            # If the current subfolder is the backup directory, inside it, or in excluded directories, skip it
+            if global_backup_path == current_root or global_backup_path in current_root.parents or any(p.lower() in EXCLUDED_DIR_NAMES for p in current_root.parts):
                 dirs[:] = []  # Prevents os.walk from entering this directory
                 continue
+        except Exception:
+            pass # Ignore resolution errors and keep going
         except Exception:
             pass # Ignore resolution errors and keep going
 
