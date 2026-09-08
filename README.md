@@ -1,19 +1,19 @@
-# 🛡️ EnvGuard: The Ultimate .env Backup Utility 🚀
+# 🛡️ EnvGuard: The Ultimate .env & .json Backup Utility 🚀
 
-Welcome to **EnvGuard**! Never lose a precious environment variable or database secret again. 
+Welcome to **EnvGuard**! Never lose a precious environment variable, database secret, or configuration file again. 
 
-Whether you're juggling fifty side projects, surviving daily system reboots, or you just love complete peace of mind, this script is your trusty sidekick for rescuing those elusive `.env` files from the depths of your hard drive. 🦸‍♂️💻
+Whether you're juggling fifty side projects, surviving daily system reboots, or you just love complete peace of mind, this script is your trusty sidekick for rescuing those elusive `.env` and `.json` files from the depths of your hard drive. 🦸‍♂️💻
 
 ## ✨ What does it do?
 
-EnvGuard doesn't just copy files—it embarks on a heroic, recursive journey traversing **every local drive on your machine concurrently** via multithreading, locating **ANY** file starting with `.env` (we're talking `.env`, `.env.local`, `.env.production`, you name it!), and securely backing them up into a single, dated **zip archive**. 
+EnvGuard doesn't just copy files—it embarks on a heroic, recursive journey traversing **every local drive on your machine concurrently** via multithreading, locating **ANY** file starting with `.env` (we're talking `.env`, `.env.local`, `.env.production`, you name it!) or ending with `.json` (configuration files, app settings, package manifests, etc.), and securely backing them up into a single, dated **zip archive**. 
 
-Inside the zip archive, the files are intelligently organized by your **machine's hostname**, followed by the **drive letter**, and recreates the **exact folder tree structure**, so you'll always know precisely where those secrets originally came from.
+Inside the zip archive, the files are intelligently organized by your **machine's hostname**, followed by the **drive letter**, and recreates the **exact folder tree structure**, so you'll always know precisely where those secrets and configurations originally came from.
 
 ### ⚙️ How It Works Under the Hood (Two-Stage Execution)
 
-1. **Real-Time Staging (As It Goes):** As worker threads scan your drives, any `.env` file found is **copied immediately** into a temporary staging folder on disk (`tempfile.TemporaryDirectory`), recreating the folder hierarchy in real-time.
-2. **Final Compression & Cleanup (At the End):** Once all scanning threads finish, the script packages the staged directory into a dated `.zip` archive (e.g. `C:\env_backup\env-backup-YYYY-MM-DD.zip`) and automatically cleans up the temporary files.
+1. **Real-Time Staging (As It Goes):** As worker threads scan your drives, any matching `.env` or `.json` file found is **copied immediately** into a temporary staging folder on disk (`tempfile.TemporaryDirectory`), recreating the folder hierarchy in real-time.
+2. **Final Compression & Cleanup (At the End):** Once all scanning threads finish, the script packages the staged directory into a dated `.zip` archive (e.g. `P:\Business\env_backup\env-backup-YYYY-MM-DD.zip`) and automatically cleans up the temporary files.
 
 ## 🌟 Key Features
 
@@ -43,8 +43,8 @@ python backup_env_files.py
 By default, it will:
 1. Identify all accessible local drives (e.g., `C:\`, `D:\`).
 2. Spawn worker threads across top-level locations.
-3. Copy `.env` files into a temporary staging folder in real-time as they are found.
-4. Compress all salvaged files into a single zip archive named **`C:\env_backup\env-backup-YYYY-MM-DD.zip`** and clean up temporary files.
+3. Copy `.env` and `.json` files into a temporary staging folder in real-time as they are found.
+4. Compress all salvaged files into a single zip archive named **`P:\Business\env_backup\env-backup-YYYY-MM-DD.zip`** and clean up temporary files.
 
 ### 🎛️ Taking Control (Custom Flags)
 
@@ -55,7 +55,7 @@ python backup_env_files.py --backup "D:\MySecureBackups\EnvVault"
 ```
 
 #### The Arguments:
-- `--backup`: Where should the backup zip archive be stored? (Default: `C:\env_backup`)
+- `--backup`: Where should the backup zip archive be stored? (Default: `P:\Business\env_backup`)
 
 ## 💡 Pro Tips
 

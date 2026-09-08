@@ -50,7 +50,12 @@ def get_local_drives():
             drives.append(drive)
     return drives
 
-def _copy_env_file(source_file_path: Path, drive_root_path: Path, base_target_backup_path: Path, drive_folder_name: str, lock: threading.Lock, counters: dict):
+def is_target_file(filename: str) -> bool:
+    """Checks if a file matches backup criteria (.env* or *.json)."""
+    name_lower = filename.lower()
+    return name_lower.startswith('.env') or name_lower.endswith('.json')
+
+def _copy_backup_file(source_file_path: Path, drive_root_path: Path, base_target_backup_path: Path, drive_folder_name: str, lock: threading.Lock, counters: dict):
     try:
         relative_path = source_file_path.relative_to(drive_root_path)
         target_file_path = base_target_backup_path / relative_path
@@ -61,6 +66,11 @@ def _copy_env_file(source_file_path: Path, drive_root_path: Path, base_target_ba
         with lock:
             print(f"\r[{drive_folder_name} Drive] Backed up: {source_file_path} -> {target_file_path}".ljust(80))
             counters['copied'] += 1
+            name_lower = source_file_path.name.lower()
+            if name_lower.startswith('.env'):
+                counters['copied_env'] += 1
+            if name_lower.endswith('.json'):
+                counters['copied_json'] += 1
     
     except PermissionError:
         with lock:
@@ -75,9 +85,12 @@ def _copy_env_file(source_file_path: Path, drive_root_path: Path, base_target_ba
             print(f"\r[{drive_folder_name} Drive] Error copying {source_file_path}: {e}".ljust(80))
             counters['errors'] += 1
 
+# Alias for backwards compatibility
+_copy_env_file = _copy_backup_file
+
 def backup_path_task(target_path_str: str, drive_path_str: str, base_backup_dir: str, machine_name: str, lock: threading.Lock, counters: dict):
     """
-    Scans a specific directory or file and backs up .env files.
+    Scans a specific directory or file and backs up .env and .json files.
     """
     try:
         target_path = Path(target_path_str).resolve()
@@ -104,8 +117,8 @@ def backup_path_task(target_path_str: str, drive_path_str: str, base_backup_dir:
 
     try:
         if target_path.is_file():
-            if target_path.name.startswith('.env'):
-                _copy_env_file(target_path, drive_root_path, base_target_backup_path, drive_folder_name, lock, counters)
+            if is_target_file(target_path.name):
+                _copy_backup_file(target_path, drive_root_path, base_target_backup_path, drive_folder_name, lock, counters)
             with lock:
                 counters['scanned_files'] += 1
             return
@@ -135,13 +148,11 @@ def backup_path_task(target_path_str: str, drive_path_str: str, base_backup_dir:
                 continue
         except Exception:
             pass # Ignore resolution errors and keep going
-        except Exception:
-            pass # Ignore resolution errors and keep going
 
         for file in files:
-            if file.startswith('.env'):
+            if is_target_file(file):
                 source_file_path = Path(root) / file
-                _copy_env_file(source_file_path, drive_root_path, base_target_backup_path, drive_folder_name, lock, counters)
+                _copy_backup_file(source_file_path, drive_root_path, base_target_backup_path, drive_folder_name, lock, counters)
 
     # Add any remaining local counters to global counters when loop completes
     with lock:
@@ -159,7 +170,7 @@ def start_multi_drive_backup(backup_dir: str):
     print(f"Temporary Staging Directory: {Path(backup_dir).resolve()}")
     print("-" * 50)
     
-    counters = {'copied': 0, 'errors': 0, 'scanned_dirs': 0, 'scanned_files': 0}
+    counters = {'copied': 0, 'copied_env': 0, 'copied_json': 0, 'errors': 0, 'scanned_dirs': 0, 'scanned_files': 0}
     lock = threading.Lock()  # Synchronize print statements and counters modification
     stop_event = threading.Event()
     start_time = time.time()
@@ -204,7 +215,7 @@ def start_multi_drive_backup(backup_dir: str):
     elapsed_time = time.time() - start_time
     print("-" * 50)
     print("Backup complete!")
-    print(f"Total .env files copied: {counters['copied']}")
+    print(f"Total files copied: {counters['copied']} (.env files: {counters['copied_env']}, .json files: {counters['copied_json']})")
     print(f"Total directories scanned: {counters['scanned_dirs']}")
     print(f"Total files scanned: {counters['scanned_files']}")
     print(f"Total errors encountered: {counters['errors']}")
@@ -212,13 +223,13 @@ def start_multi_drive_backup(backup_dir: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Backup all .env files from ALL local drives to a zip file named by run date, preserving the folder structure under the machine's hostname.",
+        description="Backup all .env and .json files from ALL local drives to a zip file named by run date, preserving the folder structure under the machine's hostname.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     # The source parameter is removed because it now implicitly scans all local drives
     parser.add_argument(
         "--backup", 
-        default="C:\\env_backup", 
+        default="P:\\Business\\env_backup", 
         help="The destination directory where the backup zip will be saved"
     )
     
